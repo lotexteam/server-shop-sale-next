@@ -88,19 +88,20 @@ export default function RootLayout({
             <link rel="dns-prefetch" href={mediaOrigin} />
           </>
         )}
-        {/* Self-hosted Roboto Condensed: preload критичных подмножеств
-            (кириллица 400/700 — самые частые веса), font-display: optional
-            зашит в CSS (как в vite-плагине inlineCss). */}
+        {/* Self-hosted Roboto (строгий гротеск нормальной ширины; скин
+            переехал с Roboto Condensed — слишком вытянутый): preload
+            критичных подмножеств (кириллица 400/700 — самые частые веса),
+            font-display: optional зашит в CSS (как в vite-плагине inlineCss). */}
         <link
           rel="preload"
-          href="/fonts/roboto-condensed-cyrillic-400-normal.woff2"
+          href="/fonts/roboto-cyrillic-400-normal.woff2"
           as="font"
           type="font/woff2"
           crossOrigin=""
         />
         <link
           rel="preload"
-          href="/fonts/roboto-condensed-cyrillic-700-normal.woff2"
+          href="/fonts/roboto-cyrillic-700-normal.woff2"
           as="font"
           type="font/woff2"
           crossOrigin=""

@@ -23,8 +23,8 @@ export function productImage(label: string, _hue = 255): string {
     <polygon points="-80,-30 0,12 0,86 -80,44" fill="#04141a"/>
     <polygon points="0,12 80,-30 80,44 0,86" fill="#C3202F"/>
   </g>
-  <text x="400" y="402" fill="#ffffff" font-family="Roboto Condensed, Arial Narrow, system-ui, sans-serif" font-size="26" font-weight="700" text-anchor="middle">${safe}</text>
-  <text x="400" y="438" fill="#e63a48" font-family="Roboto Condensed, Arial Narrow, system-ui, sans-serif" font-size="13" font-weight="600" letter-spacing="3.2" text-anchor="middle">SALE SERVER</text>
+  <text x="400" y="402" fill="#ffffff" font-family="Roboto, system-ui, sans-serif" font-size="26" font-weight="700" text-anchor="middle">${safe}</text>
+  <text x="400" y="438" fill="#e63a48" font-family="Roboto, system-ui, sans-serif" font-size="13" font-weight="600" letter-spacing="3.2" text-anchor="middle">SALE SERVER</text>
 </svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }

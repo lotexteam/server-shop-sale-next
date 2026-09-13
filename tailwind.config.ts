@@ -42,7 +42,7 @@ const config: Config = {
         success: { DEFAULT: "hsl(var(--success))", foreground: "hsl(var(--success-foreground))" },
         warning: { DEFAULT: "hsl(var(--warning))", foreground: "hsl(var(--warning-foreground))" },
       },
-      fontFamily: { sans: ["Roboto Condensed", "Roboto", "Arial Narrow", "system-ui", "sans-serif"] },
+      fontFamily: { sans: ["Roboto", "system-ui", "sans-serif"] },
       fontSize: {
         display: ["3.75rem", { lineHeight: "1.05", letterSpacing: "-0.02em", fontWeight: "800" }],
         h1: ["3rem", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "800" }],
