@@ -26,5 +26,15 @@
   для `/settings/site`; `/seo/document` — `no-store`.
 - ✅ **P1.4** клиентский `usePageMeta` убран из ProductPage/ArticlePage/ContactsPage/
   ProposalPage/ConfigurableProductView, оставлен только в `NotFoundPage`.
-- ⏳ Осталось: рантайм-верификация curl'ом бот-UA на стенде; P1.1 ISR, P1.2 бандл,
-  P1.5 шрифты (Roboto ×20 файлов — аудит подмножеств); настоящий 410 (сейчас 404+noindex).
+- ✅ **P1.2 framer-motion убран из бандла.** Библиотека импортировалась в 5 клиентских
+  файлов (`ProductCard`, `layout/MegaMenu`, `ui/toast`, `compare/CompareBar`,
+  `views/NotFoundPage`) и ехала в бандле каждой страницы. Анимации переведены на CSS
+  (`src/index.css`: `menu-/toast-/bar-/pop-in|out`) + новый хук `src/hooks/usePresence.ts`
+  (держит элемент в DOM, пока играет CSS-выход; у тостов — свой список `leaving`).
+  Классы уважают `prefers-reduced-motion`. `tsc --noEmit` — 0 ошибок; `next build` —
+  «Compiled successfully». Отличия от sp-next: здесь нет `WhyStorySection` и framer в
+  `Header`, поэтому направленные `story-enter-*` не добавлялись.
+- ⏳ Осталось: рантайм-верификация бот-UA на стенде (локально нет API/Docker; на
+  `new.server-price.ru` боты получают 404 — старый Caddyfile с `@bot`-роутом, см.
+  `server-shop/docs/SEO-PERF-NEXT-PLAN-2026-09.md`); P1.1 ISR, P1.5 шрифты
+  (Roboto ×20 файлов — аудит подмножеств); настоящий 410 (сейчас 404+noindex).
