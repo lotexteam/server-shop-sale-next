@@ -78,11 +78,20 @@ async function serverSiteGet<T>(path: string): Promise<T | null> {
       next: { revalidate: SITE_REVALIDATE_S },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      // Причину не глотаем: молчаливый фолбэк не диагностируется на стенде.
+      console.error(
+        `[seo-server] ${path} → HTTP ${res.status}: настройки сайта недоступны, метаданные деградируют в фолбэк`,
+      );
+      return null;
+    }
     return (await res.json()) as T;
-  } catch {
+  } catch (e) {
     // API недоступен (например, во время next build) — метаданные деградируют
     // до фолбэков, страница остаётся рабочей.
+    console.error(
+      `[seo-server] ${path} → сбой запроса: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return null;
   }
 }
@@ -103,11 +112,24 @@ async function serverGet<T>(path: string): Promise<T | null> {
       cache: "no-store",
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
-    if (!res.ok) return null;
+    // SeoDocumentBuilder может ответить и не-2xx (404/410) на отсутствующую
+    // сущность, но тело всё равно несёт документ (kind/http_status) — это ФАКТ
+    // отсутствия (страница отдаёт notFound()), а не сбой API. Поэтому 404/410
+    // читаем как данные; null остаётся для 5xx и сетевых сбоев.
+    if (!res.ok && res.status !== 404 && res.status !== 410) {
+      console.error(
+        `[seo-server] ${path} → HTTP ${res.status}: метаданные деградируют в фолбэк`,
+      );
+      return null;
+    }
     return (await res.json()) as T;
-  } catch {
+  } catch (e) {
     // API недоступен (например, во время next build) — метаданные деградируют
-    // до фолбэков, страница остаётся рабочей.
+    // до фолбэков, страница остаётся рабочей. Причину пишем: важно отличать
+    // «бэкенд сказал not_found» (404-страница) от «API не ответил» (фолбэк).
+    console.error(
+      `[seo-server] ${path} → сбой запроса: ${e instanceof Error ? e.message : String(e)}`,
+    );
     return null;
   }
 }

@@ -34,7 +34,17 @@
   Классы уважают `prefers-reduced-motion`. `tsc --noEmit` — 0 ошибок; `next build` —
   «Compiled successfully». Отличия от sp-next: здесь нет `WhyStorySection` и framer в
   `Header`, поэтому направленные `story-enter-*` не добавлялись.
+- ✅ **Наблюдаемость серверного слоя** (инцидент стенда 2026-09-23): `serverGet` в
+  `src/lib/seo-server.ts` (обе ветки — `no-store` и `force-cache`) и
+  `src/lib/server-data.ts` больше не глушит причину деградации — пишет
+  `[seo-server]`/`[storefront-server] <path> → HTTP <status>` или `сбой запроса: …`
+  в лог витрины (`docker logs`). В `seo-server` тело читается и на 404/410:
+  `SeoDocumentBuilder` может отдать документ (`kind`/`http_status`) таким статусом —
+  это факт отсутствия (страница отдаёт `notFound()`), а не сбой API. `404` на
+  `/products/{slug}` намеренно не логируется — штатное «нет товара».
+  Разбор: `server-shop/docs/ai-agent/updates/2026-09-23-caddy-reload-after-frontend.md`.
 - ⏳ Осталось: рантайм-верификация бот-UA на стенде (локально нет API/Docker; на
-  `new.server-price.ru` боты получают 404 — старый Caddyfile с `@bot`-роутом, см.
-  `server-shop/docs/SEO-PERF-NEXT-PLAN-2026-09.md`); P1.1 ISR, P1.5 шрифты
-  (Roboto ×20 файлов — аудит подмножеств); настоящий 410 (сейчас 404+noindex).
+  `new.server-price.ru` боты получают 404 — живой конфиг Caddy всё ещё содержит
+  `@bot`-роут на удалённый `/seo/html`, одной перегенерации файла мало, нужен
+  `caddy reload`, см. `server-shop/docs/SEO-PERF-NEXT-PLAN-2026-09.md`); P1.1 ISR,
+  P1.5 шрифты (Roboto ×20 файлов — аудит подмножеств); настоящий 410 (сейчас 404+noindex).
