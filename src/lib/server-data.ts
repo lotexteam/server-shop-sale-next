@@ -2,7 +2,8 @@
  * Серверный слой данных витрины (только Node-рантайм).
  *
  * По образцу lib/seo-server.ts: та же база API_BASE_SERVER, тот же
- * сайт-контекст X-Seo-Site мультиинстанс-бэкенда, cache:"no-store",
+ * сайт-контекст X-Seo-Site мультиинстанс-бэкенда, кэш данных с revalidate
+ * (P1.1: без него каждый SSR-запрос заново обходил API и TTFB упирался в сеть),
  * таймаут 4 c, любая ошибка → null (страница деградирует в 404/фолбэк,
  * но не роняет SSR-рендер, например во время next build).
  *
@@ -25,6 +26,11 @@ import { mapApiProduct, mapApiCategory } from "@/lib/api";
 
 const FETCH_TIMEOUT_MS = 4000;
 
+/** P1.1: TTL серверных данных, сек (категории меняются редко, товар — часто). */
+const CATEGORIES_REVALIDATE_S = 300;
+const PRODUCT_REVALIDATE_S = 60;
+const PRODUCT_LIST_REVALIDATE_S = 60;
+
 function appUrlOrigin(): string {
   const raw = (process.env.APP_URL || "").replace(/\/$/, "");
   if (!raw) return "";
@@ -35,7 +41,7 @@ function appUrlOrigin(): string {
   }
 }
 
-async function serverGet<T>(path: string): Promise<T | null> {
+async function serverGet<T>(path: string, revalidate: number): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE_SERVER}${path}`, {
       headers: {
@@ -43,7 +49,8 @@ async function serverGet<T>(path: string): Promise<T | null> {
         // Сайт-контекст мультиинстанс-бэкенда (как X-Seo-Site в SPA-версии).
         ...(appUrlOrigin() ? { "X-Seo-Site": appUrlOrigin() } : {}),
       },
-      cache: "no-store",
+      // P1.1: Data Cache Next с revalidate вместо no-store — один обход API на TTL.
+      next: { revalidate },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!res.ok) {
@@ -92,6 +99,7 @@ export async function getProductServer(idOrSlug: string): Promise<Product | null
   if (!key) return null;
   const res = await serverGet<ApiItem<Parameters<typeof mapApiProduct>[0]>>(
     `/products/${encodeURIComponent(key)}`,
+    PRODUCT_REVALIDATE_S,
   );
   return res?.data ? mapApiProduct(res.data) : null;
 }
@@ -111,6 +119,7 @@ export async function fetchProductsServer(params?: {
   if (params?.on_sale) qs.set("filter[on_sale]", "1");
   const res = await serverGet<ApiItem<Parameters<typeof mapApiProduct>[0][]>>(
     `/products?${qs}`,
+    PRODUCT_LIST_REVALIDATE_S,
   );
   if (!res) return { items: [], total: 0, page: 1, lastPage: 1 };
   const items = (res.data || []).map((p) => mapApiProduct(p));
@@ -127,6 +136,7 @@ export async function fetchProductsServer(params?: {
 export async function getCategoriesServer(): Promise<Category[]> {
   const res = await serverGet<ApiItem<Parameters<typeof mapApiCategory>[0][]>>(
     "/categories?tree=1",
+    CATEGORIES_REVALIDATE_S,
   );
   if (!res) return [];
   return (res.data || []).map((c) => mapApiCategory(c));
