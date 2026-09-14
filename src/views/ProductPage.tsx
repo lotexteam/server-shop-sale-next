@@ -33,15 +33,63 @@ import { WarrantyPicker, toCartWarranty } from "@/components/product/WarrantyPic
 import { useWarrantyOptions } from "@/hooks/useWarrantyOptions";
 import { detail as metricaDetail, toMetricaProduct } from "@/lib/analytics/metrica";
 
-export function ProductPage() {
+/**
+ * @param initialProduct — SSR-товар (getProductServer, тот же endpoint
+ * /products/{slug} и тот же маппинг DTO). В SSR-HTML уже есть H1, цена,
+ * фото и характеристики; клиентский effect остаётся для soft platform
+ * switch, related и метрики, но не перезапрашивает тот же slug.
+ */
+export function ProductPage({
+  initialProduct = undefined,
+}: {
+  initialProduct?: Product | null;
+} = {}) {
   const routeParams = useParams();
   const slug = typeof routeParams.slug === "string" ? routeParams.slug : undefined;
-  const [product, setProduct] = useState<Product | null | undefined>(undefined);
+  const [product, setProduct] = useState<Product | null | undefined>(
+    initialProduct ?? undefined,
+  );
   const [related, setRelated] = useState<Product[]>([]);
+
+  // Related-list loader shared by the SSR-hit path and the client fetch path.
+  const loadRelated = (p: Product, done: (list: Product[]) => void) => {
+    const primaryCategory = p.categorySlugs?.[0] || p.category || undefined;
+    void fetchProducts({
+      per_page: 5,
+      ...(primaryCategory ? { category_id: primaryCategory } : {}),
+    })
+      .then((res) => {
+        done(
+          res.items
+            .filter(
+              (x) =>
+                x.id !== p.id &&
+                !x.slug.startsWith("cfg-opt-") &&
+                !x.isConfigurable,
+            )
+            .slice(0, 4),
+        );
+      })
+      .catch(() => {
+        /* ignore */
+      });
+  };
 
   useEffect(() => {
     if (!slug) {
       setProduct(null);
+      return;
+    }
+    // SSR-guard: the same slug is already rendered from initialProduct —
+    // keep it, load only related, and skip the duplicate fetchProduct call.
+    // Soft platform switch (slug change on a configurable page) still runs
+    // the softPlatform branch below and refetches as before.
+    const ssrReady =
+      initialProduct != null && initialProduct.slug === slug;
+    if (ssrReady) {
+      if (related.length === 0) loadRelated(initialProduct, setRelated);
+      if (product?.slug !== slug) setProduct(initialProduct);
+      metricaDetail(toMetricaProduct(initialProduct));
       return;
     }
     let cancelled = false;
@@ -60,26 +108,9 @@ export function ProductPage() {
       // Ecommerce: product detail view.
       if (p) metricaDetail(toMetricaProduct(p));
       if (!p) return;
-      try {
-        const primaryCategory = p.categorySlugs?.[0] || p.category || undefined;
-        const res = await fetchProducts({
-          per_page: 5,
-          ...(primaryCategory ? { category_id: primaryCategory } : {}),
-        });
-        if (cancelled) return;
-        setRelated(
-          res.items
-            .filter(
-              (x) =>
-                x.id !== p.id &&
-                !x.slug.startsWith("cfg-opt-") &&
-                !x.isConfigurable,
-            )
-            .slice(0, 4),
-        );
-      } catch {
-        /* ignore */
-      }
+      loadRelated(p, (list) => {
+        if (!cancelled) setRelated(list);
+      });
     })();
     return () => {
       cancelled = true;
@@ -126,7 +157,6 @@ function ReadyProductPage({
   const { addToCart, toggleFav, favorites } = useShop();
   const { push } = useToast();
   const { onToggleCompare, isInCompare } = useCompareAction();
-  usePageMeta(product.title, product.shortDescription || null);
   const { options: warrantyOptions, loading: warrantyLoading } =
     useWarrantyOptions(product.id || product.slug);
   const [warrantyTermId, setWarrantyTermId] = useState<string | null>(null);

@@ -53,9 +53,12 @@ export async function loadCatalogProducts(force = false): Promise<Product[]> {
   return inflight;
 }
 
-export function useCatalogProducts() {
-  const [products, setProducts] = useState<Product[]>(cache ?? []);
-  const [loading, setLoading] = useState(!cache);
+export function useCatalogProducts(initialData?: Product[] | null) {
+  // initialData: SSR-первая страница каталога. loading=false при наличии
+  // SSR-данных (без мигания скелета); фоновая догрузка полного каталога
+  // для клиентской фильтрации остаётся (effect ниже зовёт loadCatalogProducts).
+  const [products, setProducts] = useState<Product[]>(initialData ?? cache ?? []);
+  const [loading, setLoading] = useState(!(cache || (initialData && initialData.length)));
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -109,11 +112,17 @@ export async function loadHomeHighlights(force = false): Promise<Product[]> {
   return homeInflight;
 }
 
-export function useHomeHighlights() {
-  const [products, setProducts] = useState<Product[]>(homeCache ?? []);
-  const [loading, setLoading] = useState(!homeCache);
+export function useHomeHighlights(initialData?: Product[] | null) {
+  // SSR-предзагрузка highlights: секция уже в HTML (loading=false).
+  const hasInitial = initialData != null && initialData.length > 0;
+  const [products, setProducts] = useState<Product[]>(
+    hasInitial ? initialData! : (homeCache ?? []),
+  );
+  const [loading, setLoading] = useState(!(homeCache || hasInitial));
 
   useEffect(() => {
+    // SSR уже отрендерил ту же подборку — повторный клиентский fetch не нужен.
+    if (hasInitial) return;
     let cancelled = false;
     void loadHomeHighlights().then((items) => {
       if (!cancelled) {
@@ -124,7 +133,7 @@ export function useHomeHighlights() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [hasInitial]);
 
   return { products, loading };
 }

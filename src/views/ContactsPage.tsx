@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { usePageMeta } from "@/components/layout/DocumentHead";
 import { submitContactRequest, StorefrontApiError, type ShopContacts } from "@/lib/api";
 import { useContacts } from "@/hooks/useContacts";
 import { SALE_CONTACTS } from "@/data/info";
@@ -181,10 +180,6 @@ function FeedbackForm() {
 }
 
 export function ContactsPage() {
-  usePageMeta(
-    "Контакты ООО «МВГ Групп»",
-    "Контакты ООО «МВГ Групп». Связаться с нами можно по телефону +7 (495) 260-88-68.",
-  );
   const { contacts } = useContacts();
 
   return (

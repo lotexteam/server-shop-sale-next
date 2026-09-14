@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { Reveal } from "@/components/common/Section";
 import { useHomeHighlights } from "@/hooks/useCatalogProducts";
 import { useHomeContent } from "@/hooks/useHomeContent";
+import type { Product } from "@/data/types";
 
 /**
  * Главная в концепции старого сайта sale-server:
@@ -32,8 +33,18 @@ function AccentTitle({ title }: { title: string }) {
   );
 }
 
-export function HomePage() {
-  const { products, loading } = useHomeHighlights();
+/**
+ * @param initialProducts — SSR-предзагрузка секции «Скидки и акции»
+ * (fetchCatalogPageServer(1,24) + фильтр cfg-opt-*, как в loadHomeHighlights).
+ * Карточки рендерятся сразу в SSR-HTML; клиентский effect остаётся, но
+ * повторный fetch пропускается, если данные уже отрендерены.
+ */
+export function HomePage({
+  initialProducts = undefined,
+}: {
+  initialProducts?: Product[] | null;
+} = {}) {
+  const { products, loading } = useHomeHighlights(initialProducts);
   const { content: home } = useHomeContent();
   const latest = products.slice(0, 8);
 

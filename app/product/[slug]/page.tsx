@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
 import { ProductPage } from "@/views/ProductPage";
 import { pageSeo, JsonLd } from "@/lib/seo-page";
+import { getProductServer } from "@/lib/server-data";
 import { permanentRedirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -25,13 +27,26 @@ export async function generateMetadata({ params, searchParams }: Props) {
 
 export default async function Page({ params }: Props) {
   const { slug } = await params;
-  const { jsonld, redirectTo } = await pageSeo(`/product/${slug}`, `/product/${slug}`);
+  const { jsonld, redirectTo, notFound: isMissing } = await pageSeo(`/product/${slug}`, `/product/${slug}`);
   // Legacy 301 (P0.2/P0.4): slug renames etc - from the page body.
   if (redirectTo) permanentRedirect(redirectTo);
+  // P0.2: факт отсутствия из /seo/document → настоящий 404.
+  // Сбой API (doc === null) сюда не попадает: страница не 404-ит массово.
+  if (isMissing) notFound();
+  // P0.1: SSR товара тем же endpoint'ом /products/{slug} и тем же маппингом,
+  // что у клиентского fetchProduct.
+  // decodeURIComponent — та же нормализация ключа, что в клиенте.
+  let key = String(slug || "").trim();
+  try {
+    key = decodeURIComponent(key);
+  } catch {
+    /* already decoded */
+  }
+  const initialProduct = await getProductServer(key);
   return (
     <>
       <JsonLd blocks={jsonld} />
-      <ProductPage />
+      <ProductPage initialProduct={initialProduct} />
     </>
   );
 }

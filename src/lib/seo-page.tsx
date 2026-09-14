@@ -9,6 +9,7 @@
  *  - фолбэки по пути (titleFromPath) + site-тайтл с суффиксом.
  */
 
+import { cache } from "react";
 import type { Metadata } from "next";
 import {
   fetchSeoDocumentServer,
@@ -120,6 +121,17 @@ function fallbackMetadata(
   };
 }
 
+/** Метаданные страницы-404: фолбэк-тайтл + noindex/nofollow (статус даёт notFound()). */
+function notFoundMetadata(
+  pathname: string,
+  site: Awaited<ReturnType<typeof fetchSiteServer>>,
+): Metadata {
+  return {
+    ...fallbackMetadata(pathname, site),
+    robots: { index: false, follow: false },
+  };
+}
+
 export type PageSeoResult = {
   metadata: Metadata;
   /** JSON-LD блоки SeoDocument — рендерятся страницей в SSR-HTML. */
@@ -132,9 +144,15 @@ export type PageSeoResult = {
    * вызывает redirect()/permanentRedirect() в своём теле.
    */
   redirectTo: string | null;
+  /**
+   * SeoDocumentBuilder ответил kind=not_found — ФАКТ отсутствия сущности:
+   * страница обязана отдать HTTP 404 через notFound(), а не мягкий 200.
+   * null-документ (сбой API) сюда не попадает — там notFound=false.
+   */
+  notFound: boolean;
 };
 
-export async function pageSeo(
+async function pageSeoImpl(
   path: string,
   pathnameForFallback?: string,
 ): Promise<PageSeoResult> {
@@ -142,9 +160,11 @@ export async function pageSeo(
     fetchSeoDocumentServer(path),
     fetchSiteServer(),
   ]);
+  const isMissing = doc?.kind === "not_found";
 
   // Легаси-редиректы (смена slug, /catalog?category=): человек и бот
-  // уходят на канонический адрес постоянным редиректом (выполняет страница).
+  // уходят на канонический адрес постоянным редиректом (выполняется
+  // страница сама — см. комментарии выше).
   let redirectTo: string | null = null;
   if (doc?.redirect_to) {
     const target = toLocalPath(doc.redirect_to);
@@ -153,11 +173,22 @@ export async function pageSeo(
     }
   }
 
-  if (doc) {
+  if (doc && !isMissing) {
     return {
       metadata: seoDocToMetadata(doc, site),
       jsonld: Array.isArray(doc.jsonld) ? doc.jsonld : [],
       redirectTo,
+      notFound: false,
+    };
+  }
+
+  if (isMissing) {
+    // redirect_to приоритетнее 404: страница проверяет redirectTo раньше.
+    return {
+      metadata: notFoundMetadata(pathnameForFallback || path, site),
+      jsonld: [],
+      redirectTo,
+      notFound: true,
     };
   }
 
@@ -165,8 +196,16 @@ export async function pageSeo(
     metadata: fallbackMetadata(pathnameForFallback || path, site),
     jsonld: [],
     redirectTo,
+    notFound: false,
   };
 }
+
+/**
+ * React cache() дедуплицирует fetch /seo/document и /settings/site в
+ * пределах одного серверного рендера: generateMetadata и тело страницы
+ * вызывают pageSeo() с тем же path — fetch выполняется один раз.
+ */
+export const pageSeo = cache(pageSeoImpl);
 
 /** Рендер JSON-LD блоков SeoDocument (server component helper). */
 export function JsonLd({ blocks }: { blocks: unknown[] }) {

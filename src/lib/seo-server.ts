@@ -44,6 +44,13 @@ type ApiItem<T> = { data?: T | null };
 
 const FETCH_TIMEOUT_MS = 4000;
 
+/**
+ * /settings/site меняется редко — force-cache + revalidate 60 c (кэш общий
+ * для next build и рантайма); /seo/document остаётся no-store (у каждого URL
+ * свой документ, robots/redirects должны быть мгновенными).
+ */
+const SITE_REVALIDATE_S = 60;
+
 function appUrlOrigin(): string {
   const raw = (process.env.APP_URL || "").replace(/\/$/, "");
   if (!raw) return "";
@@ -54,6 +61,37 @@ function appUrlOrigin(): string {
   }
 }
 
+/**
+ * GET /settings/site — публичные настройки сайта без токенов. Они меняются
+ * редко, поэтому force-cache с revalidate 60 (dedup в пределах рендера даёт
+ * React cache в seo-page.tsx; между рендерами отвечает HTTP-кэш Next).
+ */
+async function serverSiteGet<T>(path: string): Promise<T | null> {
+  try {
+    const res = await fetch(`${API_BASE_SERVER}${path}`, {
+      headers: {
+        Accept: "application/json",
+        // Сайт-контекст мультиинстанс-бэкенда (как X-Seo-Site в SPA-версии).
+        ...(appUrlOrigin() ? { "X-Seo-Site": appUrlOrigin() } : {}),
+      },
+      cache: "force-cache",
+      next: { revalidate: SITE_REVALIDATE_S },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    // API недоступен (например, во время next build) — метаданные деградируют
+    // до фолбэков, страница остаётся рабочей.
+    return null;
+  }
+}
+
+/**
+ * GET /seo/document — no-store: redirect_to, noindex/follow и canonical
+ * должны быть актуальными на каждый запрос (контракт bot-HTML
+ * SeoDocumentBuilder).
+ */
 async function serverGet<T>(path: string): Promise<T | null> {
   try {
     const res = await fetch(`${API_BASE_SERVER}${path}`, {
@@ -75,9 +113,11 @@ async function serverGet<T>(path: string): Promise<T | null> {
 }
 
 /**
- * Тот же контракт, что fetchSeoDocument в lib/api.ts: not_found → null,
- * редиректы возвращаются как redirect_to (P0.2: скин отправляет человека
- * на канонический адрес).
+ * GET /seo/document — not_found НЕ сворачивается в null: документ kind=not_found
+ * означает ФАКТ отсутствия сущности (страница отдаёт notFound() → HTTP 404),
+ * а null — только сбой/недоступность витринного API (страница деградирует в
+ * фолбэк-метаданные и остаётся рабочей: сбой API не должен превращаться
+ * в массовые 404). redirect_to отдаётся как есть (P0.2/P0.4).
  */
 export async function fetchSeoDocumentServer(
   path: string,
@@ -86,9 +126,7 @@ export async function fetchSeoDocumentServer(
   const res = await serverGet<ApiItem<ServerSeoDocument>>(
     `/seo/document?${qs.toString()}`,
   );
-  const doc = res?.data;
-  if (!doc || doc.kind === "not_found") return null;
-  return doc;
+  return res?.data ?? null;
 }
 
 type ApiSitePayload = {
@@ -108,7 +146,7 @@ function absoluteMediaUrl(url: string | null | undefined): string | null {
 }
 
 export async function fetchSiteServer(): Promise<ServerSite | null> {
-  const res = await serverGet<ApiItem<ApiSitePayload>>("/settings/site");
+  const res = await serverSiteGet<ApiItem<ApiSitePayload>>("/settings/site");
   const raw = res?.data;
   if (!raw) return null;
   const title = String(raw.title || "").trim();

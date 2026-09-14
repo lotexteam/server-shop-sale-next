@@ -14,7 +14,6 @@ import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import type { Article } from "@/data/types";
 import { NotFoundPage } from "./NotFoundPage";
-import { usePageMeta } from "@/components/layout/DocumentHead";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 export function ArticlePage() {
@@ -25,7 +24,6 @@ export function ArticlePage() {
     (Article & { bodyMarkdown?: string }) | null | undefined
   >(undefined);
   const [related, setRelated] = useState<Article[]>([]);
-  usePageMeta(article?.title ?? null, article?.excerpt ?? null);
 
   useEffect(() => {
     if (!slug) {

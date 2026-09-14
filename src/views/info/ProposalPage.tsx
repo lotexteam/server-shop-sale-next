@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePageMeta } from "@/components/layout/DocumentHead";
 import { useShop } from "@/store/shop";
 import { submitContactRequest, StorefrontApiError } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
@@ -19,11 +18,6 @@ import { formatPrice } from "@/lib/utils";
  * состав из корзины + реквизиты компании → заявка менеджеру.
  */
 export function ProposalPage() {
-  usePageMeta(
-    "Запрос коммерческого предложения",
-    "Запросите коммерческое предложение на серверы и комплектующие — подготовим КП в течение рабочего дня.",
-  );
-
   const { cart } = useShop();
   const [company, setCompany] = useState("");
   const [inn, setInn] = useState("");

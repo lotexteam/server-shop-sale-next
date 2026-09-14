@@ -224,7 +224,24 @@ function catalogStateToParams(
   return params;
 }
 
-export function CatalogPage() {
+/**
+ * @param initialProducts — SSR-первая страница каталога (fetchProductsServer
+ * + фильтр cfg-opt-*). SSR рендерит H1/карточки/цены; клиентский effect
+ * сохраняет полную логику загрузки и пропускает повторный fetch, если
+ * та же выборка (page=1, без фильтров) уже отрендерена.
+ * @param initialCategories — SSR-дерево категорий (getCategoriesServer).
+ * @param initialTotal — meta.total для SSR-текста «Найдено N товаров».
+ */
+export function CatalogPage({
+  initialProducts = undefined,
+  initialCategories = undefined,
+  initialTotal = undefined,
+}: {
+  initialProducts?: Product[] | null;
+  initialCategories?: Category[] | null;
+  /** Реальный total SSR-предзагруженной страницы (из meta.total /products) — для SSR-текста. */
+  initialTotal?: number;
+} = {}) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -252,9 +269,9 @@ export function CatalogPage() {
     [searchParams, urlCategory],
   );
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [pageItems, setPageItems] = useState<Product[]>([]);
-  const [total, setTotal] = useState(0);
-  const [productsLoading, setProductsLoading] = useState(true);
+  const [pageItems, setPageItems] = useState<Product[]>(initialProducts ?? []);
+  const [total, setTotal] = useState<number>(initialTotal ?? 0);
+  const [productsLoading, setProductsLoading] = useState(initialProducts == null);
   const [brands, setBrands] = useState<Array<{ id: string; name: string }>>([]);
   const [facets, setFacets] = useState<CatalogFilterAttr[]>([]);
   const [facetsLoading, setFacetsLoading] = useState(true);
@@ -333,8 +350,32 @@ export function CatalogPage() {
     };
   }, []);
 
+  // SSR-guard: если первая страница уже отрендерена из initialProducts
+  // (page=1, сортировка popular, без фильтров) — повторный fetch не нужен,
+  // содержимое идентично SSR-версии.
+  const ssrConsumedRef = useRef(false);
+
   useEffect(() => {
     if (catsLoading && (urlCategory || filters.categories.length)) return;
+    const ssrFirstPage =
+      initialProducts != null &&
+      initialProducts.length > 0 &&
+      !ssrConsumedRef.current &&
+      page === 1 &&
+      sort === "popular" &&
+      urlQuery === "" &&
+      urlCategory === "" &&
+      urlSub === "" &&
+      filters.categories.length === 0 &&
+      filters.brands.length === 0 &&
+      filters.conditions.length === 0 &&
+      Object.keys(filters.attributes).length === 0 &&
+      Object.keys(filters.attributeRanges).length === 0;
+    if (ssrFirstPage) {
+      ssrConsumedRef.current = true;
+      setProductsLoading(false);
+      return;
+    }
     let cancelled = false;
     setProductsLoading(true);
     void (async () => {
