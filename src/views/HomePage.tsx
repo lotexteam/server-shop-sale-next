@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { HeroVideoStage } from "@/components/home/HeroVideoStage";
+import { LinkedText } from "@/components/common/LinkedText";
 import { TilesSection } from "@/components/home/TilesSection";
 import { BenefitsSection } from "@/components/home/BenefitsSection";
 import { ProductCard } from "@/components/ProductCard";
@@ -75,7 +76,11 @@ export function HomePage({
               <div className="max-w-2xl">
                 {/* Гарантированный h1 на странице: пустой CMS-слот → дефолтный текст */}
                 <h1 className="hero-fit-title font-bold uppercase text-white">
-                  {heroTitle ?? "Новые и б/у серверы с гарантией до 5 лет"}
+                  <LinkedText
+                    segments={home?.textSegments?.["hero.title"]}
+                    fallback={heroTitle ?? "Новые и б/у серверы с гарантией до 5 лет"}
+                    linkClassName="text-[#e63a48] transition-colors hover:text-white"
+                  />
                 </h1>
                 {/* Фирменная линия-акцент под заголовком (как подчёркивание плиток) */}
                 <div className="hero-line mt-4 h-[3px] w-20 bg-[#e63a48]" aria-hidden />
@@ -98,7 +103,15 @@ export function HomePage({
                     ))}
                   </p>
                 )}
-                {heroLead && <p className="hero-fit-lead mt-5 text-white/90">{heroLead}</p>}
+                {heroLead && (
+                  <p className="hero-fit-lead mt-5 text-white/90">
+                    <LinkedText
+                      segments={home?.textSegments?.["hero.lead"]}
+                      fallback={heroLead}
+                      linkClassName="text-[#e63a48] underline underline-offset-2 transition-colors hover:text-white"
+                    />
+                  </p>
+                )}
                 {heroNotice && (
                   <p className="hero-fit-lead font-semibold uppercase tracking-wide text-white/95">
                     {heroNotice}

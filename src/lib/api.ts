@@ -1162,6 +1162,12 @@ export type HomeLinkSegment = {
   href?: string;
 };
 
+/** Фрагмент текста из cms.home texts[].segments: href делает слово кликабельным */
+export type HomeTextSegment = {
+  text: string;
+  href?: string;
+};
+
 export type HomeReviewLink = {
   label: string;
   url: string;
@@ -1216,6 +1222,8 @@ export type HomeContent = {
   discounts: { title: string | null; empty: string | null };
   /** texts_map[code] — плоские тексты главной (docs HOME-TEXT-CODES) */
   textsMap: Record<string, string>;
+  /** Код → пословные фрагменты со ссылками (cms.home texts[].segments) */
+  textSegments: Record<string, HomeTextSegment[]>;
   raw: Record<string, unknown>;
 };
 
@@ -1237,6 +1245,7 @@ export async function fetchHomeContent(): Promise<HomeContent> {
     benefits: { title: null, items: [] },
     discounts: { title: null, empty: null },
     textsMap: {},
+    textSegments: {},
     raw: {},
   };
   try {
@@ -1324,6 +1333,31 @@ export async function fetchHomeContent(): Promise<HomeContent> {
       })
       .filter((row): row is HomeReviewLink => row !== null);
 
+    // Пословные ссылки: cms.home texts[].segments → код → фрагменты
+    const textSegments: Record<string, HomeTextSegment[]> = {};
+    if (Array.isArray(d.texts)) {
+      for (const row of d.texts as Array<Record<string, unknown>>) {
+        const code = String(row?.code ?? "").trim();
+        const rawSegs = row?.segments;
+        if (!code || !Array.isArray(rawSegs)) continue;
+        const segs = (rawSegs as Array<Record<string, unknown>>)
+          .map((s): HomeTextSegment | null => {
+            const text = s?.text == null ? "" : String(s.text);
+            const href = str(s?.href);
+            if (text === "" && !href) return null;
+            return { text, href: href ?? undefined };
+          })
+          .filter((s): s is HomeTextSegment => s !== null);
+        if (segs.length) textSegments[code] = segs;
+      }
+    }
+    // Совместимость: линию hero.links можно описать и как фрагменты texts['hero.links']
+    if (heroLinks.length === 0 && textSegments["hero.links"]) {
+      heroLinks.push(
+        ...textSegments["hero.links"].map((s) => ({ label: s.text, href: s.href })),
+      );
+    }
+
     // Плитки и «Почему мы» — обычные тексты tiles.N.* / benefits.N.*
     // (стандартный реестр cms.home): нет заголовка/картинки или текста —
     // элемент пропускается, секция с нулём элементов скрыта.
@@ -1391,6 +1425,7 @@ export async function fetchHomeContent(): Promise<HomeContent> {
       textsMap: Object.fromEntries(
         Object.entries(textsMap).map(([k, v]) => [k, v == null ? "" : String(v)]),
       ),
+      textSegments,
       raw: d,
     };
   } catch {
