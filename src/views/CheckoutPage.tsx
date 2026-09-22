@@ -119,12 +119,15 @@ export function CheckoutPage() {
         title: m.name,
         subtitle:
           m.config?.description ||
-          m.config?.payer_label ||
-          (m.driver === "dellin"
-            ? m.config?.payer_mode === "receiver"
-              ? "Оплата ТК при получении"
-              : "ТК Деловые Линии"
-            : ""),
+          (m.config?.payer_label &&
+          (m.driver === "pickup" || m.config.payer_label !== "Бесплатно")
+            ? m.config.payer_label
+            : m.driver === "dellin"
+              ?
+              (m.config?.payer_mode === "receiver"
+                ? "Оплата ТК при получении"
+                : "ТК Деловые Линии")
+              : ""),
         requiresAddress: m.config?.requires_address !== false && m.driver !== "pickup",
         driver: m.driver || "manual",
         payer_label: m.config?.payer_label || null,
@@ -727,9 +730,6 @@ export function CheckoutPage() {
             <legend className="mb-4 flex items-center gap-2 text-h5">
               <Truck className="size-5 text-primary" /> Доставка
             </legend>
-            <p className="mb-3 text-caption text-muted-foreground">
-              Способы из админки (Доставка и оплата). ТК «Деловые Линии» считаются по API.
-            </p>
             {methodOptions.length === 0 ? (
               <p className="text-body-sm text-muted-foreground">Способы доставки не настроены.</p>
             ) : (
@@ -759,7 +759,9 @@ export function CheckoutPage() {
                       priceLabel = "расчёт…";
                     } else if (q?.available) {
                       priceLabel =
-                        q.free || q.price === 0 ? "Бесплатно" : formatPrice(q.price);
+                        m.driver === "pickup" && (q.free || q.price === 0)
+                          ? "Бесплатно"
+                          : formatPrice(q.price);
                     }
                     return (
                       <label
@@ -789,7 +791,9 @@ export function CheckoutPage() {
                           </span>
                           <span className="mt-0.5 block text-caption text-muted-foreground">
                             {m.subtitle}
-                            {m.payer_label && m.subtitle !== m.payer_label
+                            {m.driver === "dellin" &&
+                            m.payer_label &&
+                            m.subtitle !== m.payer_label
                               ? ` · ${m.payer_label}`
                               : ""}
                             {!isDl && q?.note ? ` · ${q.note}` : ""}
@@ -1235,7 +1239,9 @@ export function CheckoutPage() {
                   {shipping === 0
                     ? isDellin && !dellinQuote?.available
                       ? "—"
-                      : "Бесплатно"
+                      : methodMeta?.driver === "pickup"
+                        ? "Бесплатно"
+                        : formatPrice(0)
                     : formatPrice(shipping)}
                   {isDellin && dellinLoading && (
                     <span className="mt-0.5 block text-caption font-normal text-muted-foreground">
