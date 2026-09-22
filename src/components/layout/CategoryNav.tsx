@@ -24,7 +24,10 @@ export type NavItem = {
 
 export function treeToNavChildren(
   nodes: Array<{ id: string; slug: string; title: string; count?: number; children?: unknown[] }> | undefined,
+  /** null — все уровни; 0 — без подкатегорий; N — N уровней (настройка меню subcategories_depth) */
+  maxDepth: number | null = null,
 ): NavChild[] {
+  if (maxDepth !== null && maxDepth <= 0) return [];
   return (nodes ?? []).map((n) => ({
     id: n.id,
     label: n.title,
@@ -32,6 +35,7 @@ export function treeToNavChildren(
     count: n.count,
     children: treeToNavChildren(
       n.children as Array<{ id: string; slug: string; title: string; count?: number; children?: unknown[] }> | undefined,
+      maxDepth === null ? null : maxDepth - 1,
     ),
   }));
 }

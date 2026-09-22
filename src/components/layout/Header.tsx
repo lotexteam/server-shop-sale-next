@@ -44,8 +44,9 @@ const FALLBACK_CATEGORIES = [
 
 function categoryChildren(
   cat?: { id?: string; slug?: string; title?: string; children?: Array<{ id: string; slug: string; title: string; count?: number; children?: unknown[] }> } | null,
+  maxDepth: number | null = null,
 ): NavChild[] {
-  return treeToNavChildren(cat?.children as Array<{ id: string; slug: string; title: string; count?: number; children?: unknown[] }> | undefined);
+  return treeToNavChildren(cat?.children as Array<{ id: string; slug: string; title: string; count?: number; children?: unknown[] }> | undefined, maxDepth);
 }
 
 /** Поиск-иконка: панель разворачивается влево и плавно НАКЛАДЫВАЕТСЯ на соседей, не двигая их. */
@@ -272,7 +273,7 @@ export function Header() {
   const { favorites, compare } = useShop();
   const { categories } = useCategories();
   const { contacts } = useContacts();
-  const { items: headerMenu } = useMenu("header");
+  const { items: headerMenu, subcategoriesDepth: navDepth } = useMenu("header");
   const { site } = useSiteSettings();
   const brand = site?.brand?.trim() || "";
   const logoSrc = site?.logoUrl || headerLogo;
@@ -300,14 +301,14 @@ export function Header() {
     configuratorItem?.label || "Конфигуратор",
     configuratorItem?.categoryId,
   );
-  const configuratorChildren = categoryChildren(konfiguratorCat);
+  const configuratorChildren = categoryChildren(konfiguratorCat, navDepth);
 
   const menuToChild = (ch: { id: string; label: string; href: string; children?: unknown[]; categorySlug?: string }): NavChild => {
     const nested = Array.isArray(ch.children)
       ? (ch.children as Array<{ id: string; label: string; href: string; children?: unknown[]; categorySlug?: string }>).map(menuToChild)
       : [];
     const slug = ch.categorySlug || categorySlugFromHref(ch.href);
-    const fromCat = !nested.length && slug ? categoryChildren(findCategoryForNav(cats, slug, ch.label)) : [];
+    const fromCat = !nested.length && slug ? categoryChildren(findCategoryForNav(cats, slug, ch.label), navDepth) : [];
     return {
       id: ch.id,
       label: ch.label,
@@ -325,7 +326,7 @@ export function Header() {
     categoryId?: string,
   ): NavItem => {
     const slug = categorySlug || categorySlugFromHref(href);
-    const fromCat = categoryChildren(findCategoryForNav(cats, slug, label, categoryId));
+    const fromCat = categoryChildren(findCategoryForNav(cats, slug, label, categoryId), navDepth);
     const children = fromCat.length ? fromCat : extra ?? [];
     return { id, label, href, children: children.length ? children : undefined };
   };

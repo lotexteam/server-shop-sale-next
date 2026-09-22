@@ -217,6 +217,16 @@ export function FilterSidebar({
     return categoryGroups;
   }, [facets]);
 
+  /** Есть ли под заголовком что показывать (хотя бы один атрибут со значениями). */
+  const facetsHaveContent = (list: CatalogFilterAttr[]) =>
+    list.some(
+      (a) =>
+        (a.values?.length ?? 0) > 0 ||
+        (a.filter_mode === "numeric" && (a.min != null || a.max != null)),
+    );
+  const categoryGroupHasAttrs = (g: (typeof facetGroups)[number]) =>
+    g.attrGroups.some((ag) => facetsHaveContent(ag.facets));
+
   const toggle = <K extends keyof Filters>(key: K, value: string) => {
     const arr = filters[key] as string[];
     const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -348,14 +358,15 @@ export function FilterSidebar({
         )}
         {facetGroups.map((categoryGroup) => (
           <Fragment key={categoryGroup.key || "attr-general"}>
-            {categoryGroup.name && (
+            {/* Заголовок категории без атрибутов (пусто) не показываем */}
+            {categoryGroup.name && categoryGroupHasAttrs(categoryGroup) && (
               <div className="border-t border-border px-1 pb-1 pt-4 text-body-sm font-semibold text-foreground">
                 {categoryGroup.name}
               </div>
             )}
             {categoryGroup.attrGroups.map((group) => (
               <Fragment key={group.key}>
-                {group.name && (
+                {group.name && facetsHaveContent(group.facets) && (
                   <div className="px-1 pb-1 pt-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
                     {group.name}
                   </div>
