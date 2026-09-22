@@ -31,10 +31,11 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/cart", destination: "/checkout", permanent: true },
-      // SPA имел /configurator и /konfigurator как <Navigate> на категорию
-      // конфигуратора (lib/nav.ts) — теперь канонический HTTP-редирект.
-      { source: "/configurator", destination: "/catalog/konfigurator", permanent: true },
-      { source: "/konfigurator", destination: "/catalog/konfigurator", permanent: true },
+      // Канон как в store/sp: /konfigurator → /configurator, дальше работает
+      // app/configurator/page.tsx (он редиректит на категорию конфигуратора
+      // lib/nav.ts, сохраняя query — ?share=… и т.п.). Сам /configurator
+      // в next.config НЕ редиректится, иначе page.tsx недостижим.
+      { source: "/konfigurator", destination: "/configurator", permanent: true },
       { source: "/about", destination: "/blog/about", permanent: true },
       { source: "/faq", destination: "/blog/faq", permanent: true },
       { source: "/delivery", destination: "/blog/delivery", permanent: true },

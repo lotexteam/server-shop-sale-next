@@ -14,8 +14,27 @@ import type { CartLine } from "@/store/shop";
 import { productImage } from "@/lib/placeholder";
 import { API_BASE, API_ORIGIN } from "@/lib/api-base";
 
-const TOKEN_KEY = "server-price-api-token";
-const CART_TOKEN_KEY = "server-price-cart-token";
+const TOKEN_KEY = "sale-api-token";
+const CART_TOKEN_KEY = "sale-cart-token";
+
+// Одноразовая миграция со старых ключей скина server-price (они унаследованы
+// из sp и kolлизуют на связанных доменах). Старые значения удаляются.
+try {
+  if (typeof localStorage !== "undefined") {
+    for (const [legacy, next] of [
+      ["server-price-api-token", TOKEN_KEY],
+      ["server-price-cart-token", CART_TOKEN_KEY],
+    ] as const) {
+      const value = localStorage.getItem(legacy);
+      if (value) {
+        if (!localStorage.getItem(next)) localStorage.setItem(next, value);
+        localStorage.removeItem(legacy);
+      }
+    }
+  }
+} catch {
+  /* ignore */
+}
 
 export function getAuthToken(): string | null {
   try {
@@ -541,9 +560,6 @@ export async function fetchProductIdBySlug(slug: string): Promise<string | null>
     }
   }
 }
-
-/** @deprecated use fetchProductIdBySlug */
-export const resolveProductIdBySlug = fetchProductIdBySlug;
 
 export type ShopOrganization = {
   legalName: string | null;
@@ -2780,48 +2796,6 @@ export async function apiFetchAccountDocuments(
     `/account/orders/${encodeURIComponent(orderId)}/documents`,
   );
   return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function apiFetchCurrencies(): Promise<
-  Array<{ code: string; name?: string; symbol?: string }>
-> {
-  const res = await request<
-    ApiItem<Array<{ code: string; name?: string; symbol?: string }>>
-  >("/currencies");
-  return res.data || [];
-}
-
-export async function apiFetchBanners(): Promise<Record<string, unknown>[]> {
-  const res = await request<ApiItem<Record<string, unknown>[]>>("/banners");
-  return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function apiFetchBlogCategories(): Promise<Record<string, unknown>[]> {
-  const res = await request<ApiItem<Record<string, unknown>[]>>("/blog-categories");
-  return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function apiFetchCategoryIcons(): Promise<Record<string, unknown>> {
-  const res = await request<ApiItem<Record<string, unknown>>>("/meta/category-icons");
-  return res.data ?? {};
-}
-
-export async function apiSuggestDellinAddress(q: string): Promise<Record<string, unknown>[]> {
-  const res = await request<ApiItem<Record<string, unknown>[]>>(
-    `/shipping/dellin/suggest-address?q=${encodeURIComponent(q)}`,
-  );
-  return Array.isArray(res.data) ? res.data : [];
-}
-
-export async function apiUpdateAccountBuild(
-  id: string,
-  body: Record<string, unknown>,
-): Promise<ApiSavedBuild> {
-  const res = await request<ApiItem<ApiSavedBuild>>(`/account/builds/${id}`, {
-    method: "PUT",
-    json: body,
-  });
-  return res.data;
 }
 
 /**

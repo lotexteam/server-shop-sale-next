@@ -10,8 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useShop } from "@/store/shop";
+import { useContacts } from "@/hooks/useContacts";
 import { submitContactRequest, StorefrontApiError } from "@/lib/api";
 import { formatPrice } from "@/lib/utils";
+
+/** Фолбэк, если /settings/contacts не вернул телефон. */
+const FALLBACK_PHONE = "+7 (495) 260-88-68";
 
 /**
  * Запрос коммерческого предложения (аналог /commercial-proposal в sale):
@@ -19,6 +23,8 @@ import { formatPrice } from "@/lib/utils";
  */
 export function ProposalPage() {
   const { cart } = useShop();
+  const { contacts } = useContacts();
+  const supportPhone = contacts?.phone || FALLBACK_PHONE;
   const [company, setCompany] = useState("");
   const [inn, setInn] = useState("");
   const [name, setName] = useState("");
@@ -71,7 +77,7 @@ export function ProposalPage() {
       setError(
         err instanceof StorefrontApiError
           ? err.message
-          : "Не удалось отправить запрос. Попробуйте позже или позвоните: +7 (495) 260-88-68.",
+          : `Не удалось отправить запрос. Попробуйте позже или позвоните: ${supportPhone}.`,
       );
     }
   };

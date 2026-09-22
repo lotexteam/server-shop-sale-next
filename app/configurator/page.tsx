@@ -1,10 +1,10 @@
 import { permanentRedirect } from "next/navigation";
 
 /**
- * /configurator — редирект на категорию конфигуратора (lib/nav.ts:
- * CONFIGURATOR_HREF = /catalog/konfigurator). В SPA это был <Navigate>;
- * путь /konfigurator также редиректится в next.config.ts. Эта страница
- * покрывает прямые заходы с query (?share=… и т.п.), передавая их дальше.
+ * /configurator — каноническая страница входа в конфигуратор (как в store/sp;
+ * /konfigurator редиректится сюда из next.config.ts). Сама страница редиректит
+ * на категорию конфигуратора (lib/nav.ts: CONFIGURATOR_SLUG), пробрасывая
+ * query (?share=… и т.п.) — в SPA это был <Navigate>.
  */
 
 export const dynamic = "force-dynamic";

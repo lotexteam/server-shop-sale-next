@@ -1,5 +1,7 @@
-/** Категория-каталог конфигуратора на sale-server (плоское ЧПУ). */
-export const CONFIGURATOR_HREF = "/catalog/konfigurator";
+/** Вход в конфигуратор: /configurator (app-страница) редиректит на категорию
+ *  /catalog/{CONFIGURATOR_SLUG} с сохранением query. Ссылки в UI ведут на
+ *  /configurator — как в store/sp (категория остаётся внутренней целью). */
+export const CONFIGURATOR_HREF = "/configurator";
 export const CONFIGURATOR_SLUG = "konfigurator";
 
 type CatNode = {
