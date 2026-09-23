@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import dynamic from "next/dynamic";
 import { CheckCircle2, Download, MapPin, MessageCircle, Phone, Send, FileText } from "lucide-react";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,20 @@ import { useContacts } from "@/hooks/useContacts";
 import { SALE_CONTACTS } from "@/data/info";
 import { REQUISITES, REQUISITES_PDF } from "@/data/requisites";
 import { FAQ } from "@/data/faq";
+
+// MapLibre GL тянет браузер-only CSS/JS — подключаем без SSR.
+const ContactsMapLibre = dynamic(
+  () =>
+    import("@/components/common/ContactsMapLibre").then(
+      (m) => m.ContactsMapLibre,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[700px] w-full animate-pulse bg-muted" />
+    ),
+  },
+);
 
 /**
  * «Контакты» — концепция оригинала: карта 700px, поверх неё наложена белая
@@ -181,14 +196,33 @@ function FeedbackForm() {
 
 export function ContactsPage() {
   const { contacts } = useContacts();
+  const ml = contacts?.maplibre;
+  // Точка MapLibre настраивается в админке (Настройки → Контакты → Карта);
+  // без неё — прежний виджет Яндекса.
+  const useMaplibre =
+    contacts?.mapProvider === "maplibre" &&
+    typeof ml?.lat === "number" &&
+    typeof ml?.lng === "number";
 
   return (
     <div className="container-page py-6">
       <Breadcrumbs items={[{ label: "Контакты" }]} className="mb-4" />
 
-      {/* Карта с наложенной карточкой контактов + реквизитов (как в оригинале) */}
+      {/* Карта с наложенной карточкой контактов + реквизов (как в оригинале) */}
       <div className="relative">
-        <YandexMap />
+        {useMaplibre ? (
+          <div className="h-[700px] w-full overflow-hidden">
+            <ContactsMapLibre
+              lat={ml!.lat!}
+              lng={ml!.lng!}
+              zoom={ml!.zoom ?? 15}
+              title={ml!.title}
+              className="h-full min-h-0"
+            />
+          </div>
+        ) : (
+          <YandexMap />
+        )}
         <div className="relative z-10 mx-3 mt-3 w-auto rounded-[3px] bg-white p-5 shadow-[0_1px_4px_0_rgba(0,0,0,0.2)] md:absolute md:left-4 md:top-4 md:m-0 md:max-h-[calc(100%-2rem)] md:w-[400px] md:overflow-auto">
           <h1 className="text-[22px] font-bold uppercase leading-tight text-[#062531]">
             Контакты ООО «МВГ Групп»
