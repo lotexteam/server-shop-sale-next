@@ -217,6 +217,8 @@ export function ContactsPage() {
               lng={ml!.lng!}
               zoom={ml!.zoom ?? 15}
               title={ml!.title}
+              style={ml!.style}
+              styleUrl={ml!.styleUrl}
               className="h-full min-h-0"
             />
           </div>
