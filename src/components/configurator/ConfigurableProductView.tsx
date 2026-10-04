@@ -1118,6 +1118,7 @@ function SlotPanel({
     (s, p) => s + (p.option.price == null ? 0 : p.option.price * p.qty),
     0,
   );
+  const lineOnRequest = picks.some((p) => p.option.onRequest);
   const singlePick = !multi && picks[0];
   const multiQtySingle = !multi && slot.maxQty > 1 && singlePick;
 
@@ -1131,9 +1132,11 @@ function SlotPanel({
 
   const priceLabel = !picks.length
     ? "—"
-    : lineTotal === 0
-      ? "вкл."
-      : formatPrice(lineTotal);
+    : lineOnRequest
+      ? "под заказ"
+      : lineTotal === 0
+        ? "вкл."
+        : formatPrice(lineTotal);
 
   const modeHint = multi
     ? slot.maxQty > 1
