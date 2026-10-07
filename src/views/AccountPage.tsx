@@ -378,6 +378,7 @@ export function AccountPage() {
     };
 
     const onRegister = async (e: FormEvent) => {      e.preventDefault();
+      if (authBusy) return;
       if (!registerConsent) {
         // Согласие 152-ФЗ обязательно: блокируем отправку и подсвечиваем чекбокс.
         setRegisterConsentError(true);
