@@ -28,7 +28,6 @@ import { fetchProduct, fetchProducts, categoryHref } from "@/lib/api";
 import type { Category, Product } from "@/data/types";
 import { useCategories } from "@/hooks/useCategories";
 import { NotFoundPage } from "./NotFoundPage";
-import { usePageMeta } from "@/components/layout/DocumentHead";
 import { WarrantyPicker, toCartWarranty } from "@/components/product/WarrantyPicker";
 import { useWarrantyOptions } from "@/hooks/useWarrantyOptions";
 import { detail as metricaDetail, toMetricaProduct } from "@/lib/analytics/metrica";

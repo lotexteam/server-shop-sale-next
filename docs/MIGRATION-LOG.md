@@ -1,5 +1,10 @@
 # Журнал sale-ui → sale-next
 
+## 2026-10-08 — Зеркальный SEO SSR-аудит
+
+Во всех трёх Next-витринах убрана внешняя Suspense-граница вокруг page tree, а подтверждённый `kind=not_found` обрабатывается также в `generateMetadata` до рендера body. Неиспользуемый клиентский `fetchSeoDocument` удалён; серверный SEO-контракт Laravel и локальная Header Suspense-граница сохранены. `typecheck` и `build` прошли. HTTP 200 с телом 404 требует отдельной проверки после production deploy из-за streaming-ограничения Next 16.
+
+
 Пилот и полный рецепт со всеми уроками — `server-shop-sp-next/docs/MIGRATION-LOG.md`.
 Здесь только отличия sale-витрины и последующие волны.
 
