@@ -172,7 +172,7 @@ function addressFromApi(r: ApiAddress): UserAddress {
     id: r.id,
     label: r.label || "",
     city: r.city || "",
-    street: [r.street, r.house, r.apartment].filter(Boolean).join(", ") || "",
+    street: [r.street, r.apartment].filter(Boolean).join(", ") || "",
     zip: r.postal_code || undefined,
     isDefault: Boolean(r.is_default),
     recipient: r.full_name || undefined,

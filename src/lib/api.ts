@@ -3039,7 +3039,6 @@ export type ApiAddress = {
   region?: string | null;
   city: string;
   street?: string | null;
-  house?: string | null;
   apartment?: string | null;
   postal_code?: string | null;
   full_name?: string | null;
@@ -3054,7 +3053,6 @@ export type ApiAddressBody = {
   region?: string | null;
   city: string;
   street?: string | null;
-  house?: string | null;
   apartment?: string | null;
   postal_code?: string | null;
   full_name?: string | null;
