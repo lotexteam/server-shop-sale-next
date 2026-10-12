@@ -371,7 +371,7 @@ export function productPath(p: { slug?: string | null; sku?: string | null; id: 
 export function mapApiProduct(p: ApiProduct): Product {
   const display = p.price?.display ?? null;
   const compare = p.price?.compare_at_display ?? null;
-  const onRequest = p.price?.is_on_request === true || display === null;
+  const onRequest = p.price?.is_on_request === true;
   const brand = (p.brand?.name || "").trim();
   const categorySlugs = [...new Set([
     ...(p.categories || []).map((c) => c.slug).filter(Boolean),
@@ -2098,7 +2098,7 @@ export async function fetchProductConfigurator(
             p.price_configurator_display == null
               ? null
               : Number(p.price_configurator_display),
-          onRequest: p.on_request === true || p.price_configurator_display == null,
+          onRequest: p.on_request === true,
           status: p.status ?? null,
           configuratorStatus: p.status_configurator ?? null,
           isDefault: Boolean(p.is_default),
@@ -2176,7 +2176,7 @@ export async function fetchProductConfigurator(
                   ? null
                   : Number(prod.price_configurator_display),
               onRequest:
-                prod?.on_request === true || prod?.price_configurator_display == null,
+                prod?.on_request === true,
               status: prod?.status ?? null,
               configuratorStatus: prod?.status_configurator ?? null,
               isDefault: Boolean(w.is_default),
