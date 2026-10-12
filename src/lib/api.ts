@@ -2138,7 +2138,14 @@ export async function fetchProductConfigurator(
 export async function validateProductBuild(
   idOrSlug: string,
   selections: Array<{ slot_id: string; product_id: string; qty: number }>,
-): Promise<{ ok: boolean; total: number; errors: string[]; warnings: string[]; lines: unknown[] }> {
+): Promise<{
+  ok: boolean;
+  total: number;
+  errors: string[];
+  warnings: string[];
+  lines: unknown[];
+  parent?: { name?: string; price_display?: number | null; on_request?: boolean };
+}> {
   try {
     const res = await request<{
       data: {
@@ -2147,6 +2154,7 @@ export async function validateProductBuild(
         errors?: string[];
         warnings?: string[];
         lines?: unknown[];
+        parent?: { name?: string; price_display?: number | null; on_request?: boolean };
       };
     }>(`/products/${encodeURIComponent(idOrSlug)}/configurator/validate`, {
       method: "POST",
@@ -2160,6 +2168,7 @@ export async function validateProductBuild(
       // Правила совместимости информационные: сервер кладёт их в warnings
       warnings: d.warnings || [],
       lines: d.lines || [],
+      parent: d.parent,
     };
   } catch (e) {
     if (e instanceof StorefrontApiError) {
