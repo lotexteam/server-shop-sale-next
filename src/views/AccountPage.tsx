@@ -81,6 +81,7 @@ export function AccountPage() {
     pendingEmail: pendingVerification,
     verifyEmailCode,
     resendEmailCode,
+    resendVerificationEmail,
     clearPendingEmail,
     logout,
     updateProfile,
@@ -216,6 +217,23 @@ export function AccountPage() {
   const [emNew, setEmNew] = useState("");
   const [emCode, setEmCode] = useState("");
   const [emBusy, setEmBusy] = useState(false);
+  const [verificationBusy, setVerificationBusy] = useState(false);
+
+  const resendAccountVerification = async () => {
+    setVerificationBusy(true);
+    try {
+      await resendVerificationEmail();
+      push({ variant: "success", title: "Письмо отправлено повторно" });
+    } catch (err) {
+      push({
+        variant: "error",
+        title: "Не удалось отправить письмо",
+        description: err instanceof Error ? err.message : "Попробуйте позже",
+      });
+    } finally {
+      setVerificationBusy(false);
+    }
+  };
 
   const sendPwCode = async () => {
     setPwBusy(true);
@@ -415,7 +433,7 @@ export function AccountPage() {
         push({
           variant: "success",
           title: "Аккаунт создан",
-          description: "Код подтверждения отправлен на email — введите его ниже",
+          description: "Подтвердить email можно в личном кабинете в любое время",
         });
       } catch (err) {
         push({
@@ -949,6 +967,14 @@ export function AccountPage() {
                     value={profileForm.email}
                     onChange={(e) => setProfileForm((f) => ({ ...f, email: e.target.value }))}
                   />
+                  {user && !user.emailVerified ? (
+                    <div className="flex flex-wrap items-center gap-2 pt-1 text-caption text-warning">
+                      <span>Email не подтверждён</span>
+                      <Button type="button" size="sm" variant="ghost" disabled={verificationBusy} onClick={() => void resendAccountVerification()}>
+                        {verificationBusy ? "Отправка…" : "Отправить подтверждение повторно"}
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="ph">Телефон</Label>
