@@ -325,6 +325,7 @@ type ApiCategory = {
   description?: string | null;
   icon?: string | null;
   sort_order?: number;
+  search_rank?: number | null;
   products_count?: number;
   count?: number;
   children?: ApiCategory[];
@@ -473,6 +474,7 @@ export function mapApiCategory(c: ApiCategory): Category {
     count: Number(c.products_count ?? c.count ?? 0) || 0,
     description: c.description ?? undefined,
     parentId: c.parent_id ?? null,
+    searchRank: c.search_rank ?? null,
     children: (c.children || []).map((ch) => {
       const nested = mapApiCategory(ch);
       return {
@@ -480,6 +482,7 @@ export function mapApiCategory(c: ApiCategory): Category {
         slug: nested.slug,
         title: nested.title,
         count: nested.count,
+        searchRank: nested.searchRank,
         parentId: nested.parentId,
         children: nested.children,
       };

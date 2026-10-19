@@ -258,6 +258,7 @@ export function CatalogPage({
   const pathSlug = typeof routeParams.slug === "string" ? routeParams.slug : undefined;
   const urlQuery = searchParams.get("q") ?? "";
   const urlCategory = pathSlug ?? searchParams.get("category") ?? "";
+  const searchScope = searchParams.get("scope") === "global" ? "global" : "category";
   const urlSub = searchParams.get("sub") ?? "";
 
   const { categories, loading: catsLoading } = useCategories();
@@ -284,7 +285,7 @@ export function CatalogPage({
   const { push } = useToast();
 
   /** Транзитные ключи адреса, не относящиеся к фильтрам каталога. */
-  const PASSTHROUGH_KEYS = ["q", "sub", "category"] as const;
+  const PASSTHROUGH_KEYS = ["q", "sub", "category", "scope"] as const;
   const withPassthrough = (params: URLSearchParams): URLSearchParams => {
     for (const key of PASSTHROUGH_KEYS) {
       const v = searchParams.get(key);
@@ -380,7 +381,9 @@ export function CatalogPage({
     setProductsLoading(true);
     void (async () => {
       try {
-        const categoryIds = (urlSub
+        const categoryIds = (searchScope === "global"
+          ? filters.categories.filter((category) => category !== urlCategory)
+          : urlSub
           ? [urlSub]
           : filters.categories.length
             ? filters.categories
@@ -418,7 +421,7 @@ export function CatalogPage({
     return () => {
       cancelled = true;
     };
-  }, [page, sort, urlQuery, urlCategory, urlSub, filters, categories, catsLoading]);
+  }, [page, sort, urlQuery, urlCategory, urlSub, searchScope, filters, categories, catsLoading]);
 
   // Умные фасеты: те же критерии, что у списка товаров (без page/sort).
   // Бэкенд сам считает каждый блок disjunctive — с остальными фильтрами,
@@ -429,7 +432,9 @@ export function CatalogPage({
     setFacetsLoading(true);
     void (async () => {
       try {
-        const categoryIds = (urlSub
+        const categoryIds = (searchScope === "global"
+          ? filters.categories.filter((category) => category !== urlCategory)
+          : urlSub
           ? [urlSub]
           : filters.categories.length
             ? filters.categories
@@ -469,7 +474,7 @@ export function CatalogPage({
     return () => {
       cancelled = true;
     };
-  }, [urlQuery, urlCategory, urlSub, filters, categories, catsLoading]);
+  }, [urlQuery, urlCategory, urlSub, searchScope, filters, categories, catsLoading]);
 
   // Prune: значения фильтров, пропавшие из ответа фасетов, убираем и из URL —
   // адрес не должен нести мёртвые значения (URL теперь источник истины).
@@ -653,6 +658,36 @@ export function CatalogPage({
             </span>
           ) : null}
         </p>
+        {urlCategory && urlQuery ? (
+          <div className="inline-flex w-fit items-center rounded-md border border-input bg-card p-1" role="group" aria-label="Область поиска">
+            <button
+              type="button"
+              aria-pressed={searchScope === "category"}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.delete("scope");
+                next.delete("page");
+                applyParams(next);
+              }}
+              className={cn("rounded px-3 py-1.5 text-caption font-medium", searchScope === "category" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}
+            >
+              В категории
+            </button>
+            <button
+              type="button"
+              aria-pressed={searchScope === "global"}
+              onClick={() => {
+                const next = new URLSearchParams(searchParams);
+                next.set("scope", "global");
+                next.delete("page");
+                applyParams(next);
+              }}
+              className={cn("rounded px-3 py-1.5 text-caption font-medium", searchScope === "global" ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}
+            >
+              По всему каталогу
+            </button>
+          </div>
+        ) : null}
         {activeCategory?.children && activeCategory.children.length > 0 ? (
           <CategoryChips
             parentSlug={activeCategory.slug}

@@ -87,6 +87,7 @@ export interface Subcategory {
   slug: string;
   title: string;
   count: number;
+  searchRank?: number | null;
   parentId?: string | null;
   children?: Subcategory[];
 }
@@ -99,6 +100,7 @@ export interface Category {
   count: number;
   description?: string;
   parentId?: string | null;
+  searchRank?: number | null;
   children?: Subcategory[];
 }
 

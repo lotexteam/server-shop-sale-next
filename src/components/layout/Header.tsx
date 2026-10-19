@@ -53,6 +53,10 @@ function categoryChildren(
 function ExpandableSearch() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const pathCategorySlug = pathname.match(/^\/catalog\/([^/]+)/)?.[1] ?? "";
+  const categorySlug = pathCategorySlug || searchParams.get("category") || "";
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,6 +106,7 @@ function ExpandableSearch() {
             value={q}
             onChange={setQ}
             onClear={() => setQ("")}
+            categorySlug={searchParams.get("scope") === "global" ? "" : categorySlug}
             className="mr-[45px] w-full [&_input]:h-[45px] [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:shadow-none"
           />
         )}
