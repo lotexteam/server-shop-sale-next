@@ -114,7 +114,8 @@ export async function fetchProductsServer(params?: {
   on_sale?: boolean;
 }): Promise<{ items: Product[]; total: number; page: number; lastPage: number }> {
   const qs = new URLSearchParams();
-  qs.set("per_page", String(params?.per_page ?? 250));
+  // Server caps per_page at 100 (was 500 before 2026-10-24) — stay at the cap.
+  qs.set("per_page", String(params?.per_page ?? 100));
   if (params?.page) qs.set("page", String(params.page));
   if (params?.on_sale) qs.set("filter[on_sale]", "1");
   const res = await serverGet<ApiItem<Parameters<typeof mapApiProduct>[0][]>>(
