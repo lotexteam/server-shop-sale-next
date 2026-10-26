@@ -213,8 +213,17 @@
   animation: gear 15s linear infinite reverse;
 }
 
+.config-print-view .config-print-sheet {
+  display: block;
+  color: #111;
+  background: #fff;
+}
+
 @media print {
   html { scroll-behavior: auto !important; }
+  .no-print { display: none !important; }
+  .config-print-view { min-height: 0 !important; padding: 0 !important; }
+  body { background: #fff !important; }
   @page {
     margin: 12mm;
   }
