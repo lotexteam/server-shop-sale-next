@@ -312,9 +312,11 @@ export function CatalogPage({
 
     return qs ? `${pathname}?${qs}` : pathname;
   };
-  const add = (p: Product) => {
-    addToCart(p);
-    push({ variant: "success", title: "Добавлено в корзину", description: p.title, action: { label: "Перейти к оформлению", onClick: () => router.push("/checkout") } });
+  const add = async (p: Product) => {
+    const added = await addToCart(p);
+    push(added
+      ? { variant: "success", title: p.isConfigurable ? "Конфигурация в корзине" : "Добавлено в корзину", description: p.title, action: { label: "Перейти к оформлению", onClick: () => router.push("/checkout") } }
+      : { variant: "error", title: "Не удалось добавить конфигурацию", description: "Проверьте обязательные компоненты конфигуратора" });
   };
   const fav = (p: Product) => {
     toggleFav(p);
