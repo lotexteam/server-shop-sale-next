@@ -15,6 +15,7 @@ import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductPhoto } from "@/components/product/ProductPhoto";
 import { ZoomableProductImage } from "@/components/product/ZoomableProductImage";
+import { RichText } from "@/components/common/RichText";
 import { Section, SectionHeader } from "@/components/common/Section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfigurableProductView } from "@/components/configurator/ConfigurableProductView";
@@ -508,9 +509,17 @@ function ReadyProductPage({
 
           {product.description ? (
           <TabsContent value="desc">
-            <div className="prose max-w-3xl space-y-4 text-body text-muted-foreground whitespace-pre-wrap">
-              {product.description}
-            </div>
+            {/* Описание хранится как HTML/markdown: рендерим разметку,
+                а не показываем теги текстом. */}
+            <RichText
+              value={product.description}
+              className="max-w-3xl"
+              renderLink={({ href, className, children }) => (
+                <Link href={href} className={className}>
+                  {children}
+                </Link>
+              )}
+            />
           </TabsContent>
           ) : null}
 

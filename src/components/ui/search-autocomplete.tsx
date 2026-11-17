@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search as SearchIcon, X, Package, FolderOpen, ArrowRight, Loader2 } from "lucide-react";
 import { cn, formatPrice } from "@/lib/utils";
+import { plainText } from "@/lib/rich-text";
 import { searchCatalog, type SearchHit } from "@/lib/search";
 import { categoryHref } from "@/lib/api";
 
@@ -273,7 +274,9 @@ export function SearchAutocomplete({
                           </span>
                           <span className="block truncate text-caption text-muted-foreground">
                             {hit.category.count} товаров
-                            {hit.category.description ? ` · ${hit.category.description}` : ""}
+                            {plainText(hit.category.description)
+                              ? ` · ${plainText(hit.category.description)}`
+                              : ""}
                           </span>
                         </span>
                       </Link>
