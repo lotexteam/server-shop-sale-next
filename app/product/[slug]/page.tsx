@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { ProductPage } from "@/views/ProductPage";
 import { pageSeo, JsonLd } from "@/lib/seo-page";
-import { getProductServer } from "@/lib/server-data";
+import { getProductServer, getCategoriesServer } from "@/lib/server-data";
 import { permanentRedirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -43,11 +43,16 @@ export default async function Page({ params }: Props) {
   } catch {
     /* already decoded */
   }
-  const initialProduct = await getProductServer(key);
+  const [initialProduct, categories] = await Promise.all([
+    getProductServer(key),
+    // Дерево категорий — для крошек «Каталог → … → подкатегория» в SSR-HTML
+    // (и для конфигурируемого товара тоже).
+    getCategoriesServer(),
+  ]);
   return (
     <>
       <JsonLd blocks={jsonld} />
-      <ProductPage initialProduct={initialProduct} />
+      <ProductPage initialProduct={initialProduct} initialCategories={categories} />
     </>
   );
 }

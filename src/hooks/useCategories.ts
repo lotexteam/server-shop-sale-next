@@ -8,6 +8,15 @@ import { assembleCategoryTree } from "@/lib/nav";
 let cache: Category[] | null = null;
 let inflight: Promise<Category[]> | null = null;
 
+/**
+ * Засеять кэш SSR-деревом до первого рендера клиентских хуков: страница
+ * товара передаёт категории из серверной сборки — крошки (в т.ч. у
+ * конфигурируемого товара) не мигают пустым местом, пока идёт клиентский fetch.
+ */
+export function seedCategories(cats: Category[] | null | undefined): void {
+  if (cats && cats.length && !cache) cache = cats;
+}
+
 export async function loadCategories(force = false): Promise<Category[]> {
   if (!force && cache) return cache;
   if (!force && inflight) return inflight;
