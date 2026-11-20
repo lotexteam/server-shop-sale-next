@@ -141,11 +141,13 @@ export async function searchCatalog(
             // Основной путь: серверный поиск на бэке (GET /search)
             return { items: await searchProductsApi(q), ranked: true };
           } catch {
-            // Фолбэк: SQL-поиск по токенам
+            // Фолбэк: SQL-поиск на бэке. Порядок тоже задаёт сервер —
+            // /products?q= сортирует по «месту в поиске» категории, поэтому
+            // клиентская эвристика не должна пересортировывать выдачу.
             const fallback = await fetchProducts({ q, per_page: 50 }).catch(
               () => ({ items: [] as Product[], total: 0, page: 1, lastPage: 1 }),
             );
-            return { ...fallback, ranked: false };
+            return { ...fallback, ranked: true };
           }
         })()
       : Promise.resolve({ items: [] as Product[], ranked: false }),
