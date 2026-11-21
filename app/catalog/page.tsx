@@ -1,7 +1,7 @@
 import { CatalogPage } from "@/views/CatalogPage";
 import { pageSeo, JsonLd } from "@/lib/seo-page";
 import { permanentRedirect } from "next/navigation";
-import { fetchProductsServer, getCategoriesServer, applyCatalogFilter } from "@/lib/server-data";
+import { fetchProductsServer, getCategoriesServer, applyCatalogFilter, trimProductsForCards } from "@/lib/server-data";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +36,7 @@ export default async function Page() {
     <>
       <JsonLd blocks={jsonld} />
       <CatalogPage
-        initialProducts={applyCatalogFilter(page1.items)}
+        initialProducts={trimProductsForCards(applyCatalogFilter(page1.items))}
         initialCategories={categories}
         initialTotal={page1.total}
       />

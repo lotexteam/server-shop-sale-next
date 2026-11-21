@@ -1,7 +1,7 @@
 import { HomePage } from "@/views/HomePage";
 import { pageSeo, JsonLd } from "@/lib/seo-page";
 import { permanentRedirect } from "next/navigation";
-import { fetchProductsServer } from "@/lib/server-data";
+import { fetchProductsServer, trimProductsForCards } from "@/lib/server-data";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,9 @@ export default async function Page() {
   // P0.1: SSR подборки главной — те же параметры, что у loadHomeHighlights
   // (одна страница /products, 24 шт, без чистых cfg-opt-* опций).
   const page1 = await fetchProductsServer({ page: 1, per_page: 24 });
-  const initialProducts = page1.items.filter((p) => !p.slug.startsWith("cfg-opt-"));
+  const initialProducts = trimProductsForCards(
+    page1.items.filter((p) => !p.slug.startsWith("cfg-opt-")),
+  );
   return (
     <>
       <JsonLd blocks={jsonld} />

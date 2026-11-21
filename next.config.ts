@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 import path from "node:path";
+// Заголовки безопасности живут в src/lib/security-headers.ts: тот же список
+// применяет middleware для собственных ответов (404/редиректы).
+import { SECURITY_HEADERS } from "./src/lib/security-headers";
 
 /**
  * server-shop-sale-next — Next.js 16 App Router версия витрины
@@ -7,6 +10,13 @@ import path from "node:path";
  * Миграция 1:1 по рецепту server-shop-sp-next (docs/MIGRATION-LOG.md).
  */
 const nextConfig: NextConfig = {
+  // Next 16 по умолчанию СТРИМИТ метаданные: <title>, <meta>,
+  // <link rel="canonical"> доезжают в <body>, и поисковики их не видят.
+  // «Жадный» регэксп включает блокирующий режим для всех запросов
+  // (SEO-аудит store-server.ru 2026-11-20, перенесён на этот скин).
+  htmlLimitedBots: /.*/,
+  // security-info-disclosure: X-Powered-By: Next.js выдавал стек.
+  poweredByHeader: false,
   // Turbopack: корень проекта — этот каталог (иначе Next берёт каталог
   // первого найденного lockfile выше по дереву).
   turbopack: {
@@ -25,12 +35,20 @@ const nextConfig: NextConfig = {
   // префикса и попадёт не в ту статику.
   env: {
     NEXT_PUBLIC_ASSET_PREFIX: process.env.NEXT_ASSET_PREFIX ?? "",
+    // Канонический origin для share-ссылок и клиентских абсолютных URL.
+    NEXT_PUBLIC_SITE_URL: (process.env.APP_URL || process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, ""),
   },
   // Компактный Node-контейнер: docker copy .next/standalone + static + public.
   output: "standalone",
   images: {
     // Все изображения — обычные <img> как в SPA-версии; next/image не включаем.
     unoptimized: true,
+  },
+  async headers() {
+    return [
+      // Заголовки безопасности на все ответы витрины (аудит 2026-11-20).
+      { source: "/:path*", headers: SECURITY_HEADERS },
+    ];
   },
   // Легаси-редиректы, которые в SPA были <Navigate replace> — настоящие HTTP
   // 308 (SEO-семантика SeoDocumentBuilder, P0.2/P0.4).
@@ -58,6 +76,13 @@ const nextConfig: NextConfig = {
     return [
       { source: "/llms.txt", destination: "/llms-txt" },
       { source: "/ai-catalog.json", destination: "/ai-catalog-json" },
+      // AI/GEO readiness: Markdown-инструкции и манифесты для агентов.
+      // /manifest.webmanifest у sale-скина — статический файл в public/,
+      // маршрут ему не нужен (public имеет приоритет).
+      { source: "/AGENTS.md", destination: "/agents-md" },
+      { source: "/index.md", destination: "/index-md" },
+      { source: "/.well-known/mcp.json", destination: "/.well-known/mcp-json" },
+      { source: "/.well-known/agent-card.json", destination: "/.well-known/agent-card-json" },
       { source: "/.well-known/security.txt", destination: "/.well-known/security-txt" },
       { source: "/.well-known/gpc.json", destination: "/.well-known/gpc-json" },
       { source: "/.well-known/ai-plugin.json", destination: "/.well-known/ai-plugin-json" },

@@ -471,6 +471,10 @@ export function Header() {
           <img
             src={logoSrc}
             alt={brand || "Sale Server"}
+            width={170}
+            height={44}
+            fetchPriority="high"
+            decoding="async"
             className="h-8 max-w-[104px] object-contain xs:h-9 xs:max-w-[130px] sm:h-[44px] sm:max-w-[170px]"
           />
         </Link>
