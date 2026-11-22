@@ -467,7 +467,7 @@ export function Header() {
         </Drawer>
 
         {/* Логотип */}
-        <Link  href="/" className="flex shrink-0 items-center" aria-label="На главную">
+        <Link  href="/" className="flex min-h-11 shrink-0 items-center" aria-label="На главную">
           <img
             src={logoSrc}
             alt={brand || "Sale Server"}
@@ -475,7 +475,7 @@ export function Header() {
             height={44}
             fetchPriority="high"
             decoding="async"
-            className="h-8 max-w-[104px] object-contain xs:h-9 xs:max-w-[130px] sm:h-[44px] sm:max-w-[170px]"
+            className="h-11 max-w-[104px] object-contain xs:max-w-[130px] sm:max-w-[170px]"
           />
         </Link>
 

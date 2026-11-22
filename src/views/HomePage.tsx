@@ -11,6 +11,8 @@ import { Reveal } from "@/components/common/Section";
 import { useHomeHighlights } from "@/hooks/useCatalogProducts";
 import { useHomeContent } from "@/hooks/useHomeContent";
 import type { Product } from "@/data/types";
+import { RichText } from "@/components/common/RichText";
+import type { ServerHomeSeoContent } from "@/lib/server-data";
 
 /**
  * Главная в концепции старого сайта sale-server:
@@ -42,9 +44,11 @@ function AccentTitle({ title }: { title: string }) {
  */
 export function HomePage({
   initialProducts = undefined,
+  initialSeoContent,
 }: {
   initialProducts?: Product[] | null;
-} = {}) {
+  initialSeoContent: ServerHomeSeoContent;
+}) {
   const { products, loading } = useHomeHighlights(initialProducts);
   const { content: home } = useHomeContent();
   const latest = products.slice(0, 8);
@@ -187,6 +191,14 @@ export function HomePage({
           </div>
         </div>
       </section>
+      {initialSeoContent.paragraphs.length > 0 && (
+        <section className="mx-auto max-w-[1400px] px-4 py-10 lg:py-14" aria-labelledby={initialSeoContent.title ? "home-seo-title" : undefined}>
+          {initialSeoContent.title ? <h2 id="home-seo-title" className="mb-4 text-2xl font-semibold">{initialSeoContent.title}</h2> : null}
+          <div className="space-y-4 text-body leading-relaxed text-muted-foreground">
+            {initialSeoContent.paragraphs.map((paragraph, index) => <RichText key={index} value={paragraph} />)}
+          </div>
+        </section>
+      )}
     </>
   );
 }

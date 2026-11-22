@@ -81,6 +81,8 @@ export default async function RootLayout({
     fetchChromeContactsServer(),
     fetchMenuColumnsServer("footer"),
   ]);
+  const siteOrigin = (process.env.APP_URL || "").replace(/\/$/, "");
+  const headerImage = siteOrigin ? `${siteOrigin}/header_logo.svg` : "/header_logo.svg";
 
   const mediaOrigin = (() => {
     const base = MEDIA_BASE_URL.replace(/\/$/, "");
@@ -95,6 +97,7 @@ export default async function RootLayout({
   return (
     <html lang="ru">
       <head>
+        <link rel="preload" as="image" href={headerImage} fetchPriority="high" />
         {/* Эквивалент mediaPreconnect-плагина Vite: preconnect/dns-prefetch
             к origin хранилища картинок, если оно задано. */}
         {mediaOrigin && (

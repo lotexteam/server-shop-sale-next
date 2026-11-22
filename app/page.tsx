@@ -1,7 +1,7 @@
 import { HomePage } from "@/views/HomePage";
 import { pageSeo, JsonLd } from "@/lib/seo-page";
 import { permanentRedirect } from "next/navigation";
-import { fetchProductsServer, trimProductsForCards } from "@/lib/server-data";
+import { fetchHomeSeoContentServer, fetchProductsServer, trimProductsForCards } from "@/lib/server-data";
 
 export const dynamic = "force-dynamic";
 
@@ -28,14 +28,17 @@ export default async function Page() {
   if (redirectTo) permanentRedirect(redirectTo);
   // P0.1: SSR подборки главной — те же параметры, что у loadHomeHighlights
   // (одна страница /products, 24 шт, без чистых cfg-opt-* опций).
-  const page1 = await fetchProductsServer({ page: 1, per_page: 24 });
+  const [page1, homeSeoContent] = await Promise.all([
+    fetchProductsServer({ page: 1, per_page: 24 }),
+    fetchHomeSeoContentServer(),
+  ]);
   const initialProducts = trimProductsForCards(
     page1.items.filter((p) => !p.slug.startsWith("cfg-opt-")),
   );
   return (
     <>
       <JsonLd blocks={jsonld} />
-      <HomePage initialProducts={initialProducts.length ? initialProducts : undefined} />
+      <HomePage initialProducts={initialProducts.length ? initialProducts : undefined} initialSeoContent={homeSeoContent} />
     </>
   );
 }

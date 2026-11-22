@@ -30,6 +30,7 @@ const FETCH_TIMEOUT_MS = 4000;
 const CATEGORIES_REVALIDATE_S = 300;
 const PRODUCT_REVALIDATE_S = 60;
 const PRODUCT_LIST_REVALIDATE_S = 60;
+const HOME_REVALIDATE_S = 60;
 
 function appUrlOrigin(): string {
   const raw = (process.env.APP_URL || "").replace(/\/$/, "");
@@ -77,6 +78,24 @@ async function serverGet<T>(path: string, revalidate: number): Promise<T | null>
 }
 
 type ApiItem<T> = { data?: T | null; meta?: Record<string, number> };
+
+export type ServerHomeSeoContent = {
+  title: string;
+  paragraphs: string[];
+};
+
+/** Public editorial copy comes from the backend homepage CMS. */
+export async function fetchHomeSeoContentServer(): Promise<ServerHomeSeoContent> {
+  const response = await serverGet<ApiItem<Record<string, unknown>>>("/settings/home", HOME_REVALIDATE_S);
+  const data = response?.data;
+  const paragraphs = Array.isArray(data?.seo_content)
+    ? data.seo_content.filter((value): value is string => typeof value === "string" && value.trim() !== "")
+    : [];
+  return {
+    title: String(data?.seo_content_title || "").trim(),
+    paragraphs,
+  };
+}
 
 /** Key-нормализация, идентичная клиентскому fetchProduct (decode → trim). */
 export function normalizeProductKey(raw: string): string {
