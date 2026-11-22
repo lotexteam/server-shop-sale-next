@@ -2,7 +2,6 @@
 
 const headerLogo = "/header_logo.svg";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Phone, Mail, MapPin } from "lucide-react";
 import { useMenu } from "@/hooks/useMenu";
 import type { MenuNavItem } from "@/lib/api";
@@ -11,9 +10,6 @@ import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { useConsent } from "@/hooks/useConsent";
 import { reopenConsentSettings } from "@/lib/consent/consent";
 import type { ChromeContacts, ChromeMenuColumn } from "@/lib/chrome-server";
-
-/** Абсолютный origin для share-ссылок (шеринг требует полный URL). */
-const SITE_ORIGIN = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
 
 /**
  * Футер в концепции старого сайта: красная полоса (#bf182f), по центру ссылки,
@@ -36,7 +32,6 @@ export function Footer({
   const { items } = useMenu("footer");
   const { contacts } = useContacts();
   const { site } = useSiteSettings();
-  const pathname = usePathname();
   // 152-ФЗ: «изменить настройки cookie можно в любой момент».
   const { phase } = useConsent();
 
@@ -57,6 +52,9 @@ export function Footer({
   ).map((p) => ({ label: p, href: `tel:${p.replace(/\D+/g, "")}` }));
   const email = contacts?.email?.trim() || initialContacts?.email?.trim() || null;
   const address = contacts?.address?.trim() || initialContacts?.address?.trim() || null;
+  const socials = contacts
+    ? contacts.socials
+    : initialContacts?.socials ?? [];
 
   const consentLink = phase === "decided" && (
     <button
@@ -92,11 +90,7 @@ export function Footer({
             { id: "footer-catalog", label: "Каталог", href: "/catalog" },
             { id: "footer-blog", label: "Блог", href: "/blog" },
             { id: "footer-contacts", label: "Контакты", href: "/contacts" },
-            { id: "footer-terms", label: "Условия продажи", href: "/terms" },
           ];
-
-  const shareUrl = `${SITE_ORIGIN}${pathname || "/"}`;
-  const shareTitle = site?.title || brand;
 
   return (
     <footer className="bg-[#bf182f] pb-20 text-white lg:pb-0">
@@ -143,6 +137,16 @@ export function Footer({
           )}
         </address>
       )}
+      {socials.length > 0 && (
+        <nav aria-label="Социальные сети" className="border-t border-[rgba(0,0,0,0.15)] py-2 text-center text-caption">
+          {socials.map((social) => (
+            <a key={social.href} href={social.href} target="_blank" rel="noopener noreferrer"
+              className="mx-2 inline-flex min-h-11 items-center underline-offset-2 hover:text-white hover:underline">
+              {social.label}
+            </a>
+          ))}
+        </nav>
+      )}
       <div className="border-t border-[rgba(0,0,0,0.15)] py-2.5 text-center text-caption text-white/70">
         {about && <p className="px-4 leading-relaxed">{about}</p>}
         {copyright && <p>© {copyright} {new Date().getFullYear()}</p>}
@@ -153,25 +157,6 @@ export function Footer({
             {withdrawLink}
           </p>
         )}
-        {/* Юридические ссылки и шеринг (eeat-terms-of-service, social-share-buttons) */}
-        <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <Link href="/terms" className="underline underline-offset-2 hover:text-white">
-            Условия продажи
-          </Link>
-          <span aria-hidden>·</span>
-          <Link href="/editorial-policy" className="underline underline-offset-2 hover:text-white">
-            Редакционная политика
-          </Link>
-          <span aria-hidden>·</span>
-          <a
-            href={`https://vk.com/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="underline underline-offset-2 hover:text-white"
-          >
-            Поделиться
-          </a>
-        </p>
       </div>
     </footer>
   );
